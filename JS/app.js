@@ -1,28 +1,18 @@
-// Archivo: script.js
-
-// Esperamos que el DOM cargue para agregar el evento al botón
+// Esperamos que el contenido de la página se haya cargado completamente
 window.addEventListener("DOMContentLoaded", () => {
     const formulario = document.getElementById("formularioIMC");
+
+    // Cuando el formulario se envíe, llamamos a la función para calcular el IMC
     formulario.addEventListener("submit", function (e) {
-        e.preventDefault(); // Prevenimos que se recargue la página
+        e.preventDefault(); // Prevenimos la recarga de la página al enviar el formulario
         simuladorIMC();
-
-        // Mostramos los últimos datos guardados si existen
-        const datosGuardados = JSON.parse(localStorage.getItem("datosUsuario"));
-        const resultadoGuardado = JSON.parse(localStorage.getItem("resultadoIMC"));
-
-        if (datosGuardados && resultadoGuardado) {
-            mostrarResultados(
-                datosGuardados.peso,
-                datosGuardados.altura,
-                resultadoGuardado.imc,
-                resultadoGuardado.clasificacion
-            );
-        }
     });
+
+    // Mostrar historial cuando la página cargue
+    mostrarHistorial();
 });
 
-// Función para solicitar datos desde el formulario HTML
+// Función para obtener los datos del formulario
 function solicitarDatos() {
     const pesoInput = document.getElementById("peso");
     const alturaInput = document.getElementById("altura");
@@ -30,26 +20,23 @@ function solicitarDatos() {
     let peso = parseFloat(pesoInput.value);
     let altura = parseFloat(alturaInput.value);
 
-    // Validación defensiva
+    // Validación
     if (isNaN(peso) || isNaN(altura) || peso <= 0 || altura <= 0) {
         mostrarError("Por favor, ingresa valores válidos y mayores a 0.");
         return null;
     }
 
-    // Si la altura parece estar en centímetros (ej: 170), la convertimos a metros
+    // Si la altura está en cm, la convertimos a metros
     if (altura > 3) {
         altura = altura / 100;
     }
 
-    // Guardamos los datos ingresados en el LocalStorage
-    localStorage.setItem("datosUsuario", JSON.stringify({ peso, altura }));
-
     return { peso, altura };
 }
 
-// Función para calcular el IMC y clasificar según estándar chileno
+// Función para calcular el IMC
 function calcularIMC(peso, altura) {
-    let imc = peso / (altura * altura);
+    const imc = peso / (altura * altura);
     let clasificacion = "";
 
     if (imc < 18.5) {
@@ -69,9 +56,23 @@ function calcularIMC(peso, altura) {
     return { imc, clasificacion };
 }
 
-// Función para mostrar resultados en la página
+// Función para mostrar los resultados en la página
 function mostrarResultados(peso, altura, imc, clasificacion) {
     const resultadoDiv = document.getElementById("resultado");
+
+    // Limpiar el contenido anterior y las clases
+    resultadoDiv.className = '';
+
+    // Asignar la clase correspondiente según la clasificación
+    if (clasificacion === "Bajo peso") {
+        resultadoDiv.classList.add("bajoPeso");
+    } else if (clasificacion === "Peso normal") {
+        resultadoDiv.classList.add("pesoNormal");
+    } else if (clasificacion === "Sobrepeso") {
+        resultadoDiv.classList.add("sobrepeso");
+    } else if (clasificacion === "Obesidad I" || clasificacion === "Obesidad II" || clasificacion === "Obesidad III") {
+        resultadoDiv.classList.add("obesidad");
+    }
 
     resultadoDiv.innerHTML = `
         <p><strong>Peso:</strong> ${peso} kg</p>
@@ -80,38 +81,71 @@ function mostrarResultados(peso, altura, imc, clasificacion) {
         <p><strong>Clasificación:</strong> ${clasificacion}</p>
     `;
 
-    // Color del resultado según clasificación
-    resultadoDiv.style.color = obtenerColorClasificacion(clasificacion);
-
-    // Guardamos el resultado del cálculo en LocalStorage
-    localStorage.setItem("resultadoIMC", JSON.stringify({ imc, clasificacion }));
+    // Guardamos los resultados en el historial
+    guardarEnHistorial(peso, altura, imc, clasificacion);
 }
 
-// Función para mostrar errores en pantalla
+// Función para mostrar errores en la página
 function mostrarError(mensaje) {
     const resultadoDiv = document.getElementById("resultado");
+    resultadoDiv.className = ''; // Quitar cualquier clase previa
     resultadoDiv.innerHTML = `<p style="color: red;">${mensaje}</p>`;
 }
 
-// Devuelve un color según la clasificación
-function obtenerColorClasificacion(clasificacion) {
-    switch (clasificacion) {
-        case "Bajo peso": return "#f39c12"; // Naranja
-        case "Peso normal": return "#27ae60"; // Verde
-        case "Sobrepeso": return "#e67e22"; // Naranja oscuro
-        case "Obesidad I": return "#d35400"; // Naranja fuerte
-        case "Obesidad II": return "#c0392b"; // Rojo oscuro
-        case "Obesidad III": return "#96281B"; // Rojo intenso
-        default: return "black";
-    }
+// Función para guardar los resultados en el historial
+function guardarEnHistorial(peso, altura, imc, clasificacion) {
+    const historialDiv = document.getElementById("historial");
+    const historial = JSON.parse(localStorage.getItem("historial")) || [];
+
+    // Crear un nuevo registro
+    const nuevoRegistro = {
+        fecha: new Date().toLocaleString(),
+        peso,
+        altura,
+        imc,
+        clasificacion
+    };
+
+    // Insertamos el nuevo registro al principio del historial para que el último quede arriba
+    historial.unshift(nuevoRegistro);
+
+    // Guardamos el historial en localStorage
+    localStorage.setItem("historial", JSON.stringify(historial));
+
+    mostrarHistorial(); // Actualizamos la vista del historial
 }
 
-// Función principal que ejecuta todo el proceso
+// Función para mostrar el historial en la página
+function mostrarHistorial() {
+    const historialDiv = document.getElementById("historial");
+    const historial = JSON.parse(localStorage.getItem("historial")) || [];
+
+    if (historial.length === 0) {
+        historialDiv.innerHTML = "<p>Aún no hay registros.</p>";
+        return;
+    }
+
+    historialDiv.innerHTML = historial
+        .map((registro) => {
+            return `
+                <p>
+                    <strong>Fecha:</strong> ${registro.fecha} <br />
+                    <strong>Peso:</strong> ${registro.peso} kg <br />
+                    <strong>Altura:</strong> ${registro.altura} m <br />
+                    <strong>IMC:</strong> ${registro.imc.toFixed(2)} <br />
+                    <strong>Clasificación:</strong> ${registro.clasificacion}
+                </p>
+            `;
+        })
+        .join("");
+}
+
+// Función principal del simulador IMC
 function simuladorIMC() {
     const datos = solicitarDatos();
-    if (datos) {
-        const { peso, altura } = datos;
-        const { imc, clasificacion } = calcularIMC(peso, altura);
-        mostrarResultados(peso, altura, imc, clasificacion);
-    }
+    if (!datos) return; // Si los datos son inválidos, no continuamos
+
+    const { peso, altura } = datos;
+    const { imc, clasificacion } = calcularIMC(peso, altura);
+    mostrarResultados(peso, altura, imc, clasificacion);
 }

@@ -36,6 +36,8 @@ h1 {
 h2 {
     text-align: center;
     margin-bottom: 10px;
+    margin-top: 40px;
+    /* Espacio extra antes del historial */
 }
 
 /* Estilos para el formulario */
@@ -75,16 +77,59 @@ button:hover {
 
 /* Estilos para los resultados */
 #resultado {
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #ecf0f1;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    margin-bottom: 40px;
+    /* Espacio antes del historial */
+    padding: 10px;
     text-align: center;
 }
 
-#resultado p {
+/* SOLO letras de colores según la clasificación */
+.bajoPeso p {
+    color: #f1c40f;
+    /* Amarillo */
+}
+
+.pesoNormal p {
+    color: #2ecc71;
+    /* Verde */
+}
+
+.sobrepeso p {
+    color: #e67e22;
+    /* Naranjo */
+}
+
+.obesidad p {
+    color: #e74c3c;
+    /* Rojo */
+}
+
+/* Historial */
+.historial {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #ecf0f1;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Compacto: una sola línea divisoria */
+.historial p {
     margin: 10px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* Texto de ejemplo */
+.ejemplo {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-bottom: 15px;
+    text-align: center;
 }
 
 /* Responsive: Ajustes para pantallas pequeñas */
